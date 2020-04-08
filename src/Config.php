@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace Simps;
 
+use Dotenv\Dotenv;
+
 class Config
 {
     private static $instance;
@@ -19,6 +21,9 @@ class Config
 
     private function __construct()
     {
+        if (file_exists(BASE_PATH . '/.env')) {
+            Dotenv::createImmutable(BASE_PATH)->load();
+        }
     }
 
     public static function getInstance()
