@@ -14,6 +14,7 @@ namespace Simps\Server;
 use Simps\Application;
 use Simps\Listener;
 use Simps\Route;
+use Simps\Server\Protocol\HTTP\SimpleRoute;
 use Swoole\Http\Server;
 use Swoole\Server as HttpServer;
 
@@ -33,6 +34,8 @@ class Http
         $this->_config = $httpConfig;
         if ($httpConfig['settings']['only_simple_http'] ?? false) {
             $this->_server = new HttpServer($httpConfig['ip'], $httpConfig['port'], $config['mode']);
+            $this->_server->on('workerStart', [$this, 'onSimpleWorkerStart']);
+            $this->_server->on('receive', [$this, 'onReceive']);
         } else {
             $this->_server = new Server(
                 $httpConfig['ip'],
@@ -76,8 +79,19 @@ class Http
         Listener::getInstance()->listen('workerStart', $server, $workerId);
     }
 
+    public function onSimpleWorkerStart(HttpServer $server, int $workerId)
+    {
+        $this->_route = SimpleRoute::getInstance();
+        Listener::getInstance()->listen('simpleWorkerStart', $server, $workerId);
+    }
+
     public function onRequest(\Swoole\Http\Request $request, \Swoole\Http\Response $response)
     {
         $this->_route->dispatch($request, $response);
+    }
+
+    public function onReceive($server, $fd, $from_id, $data)
+    {
+        $this->_route->dispatch($server, $fd, $data);
     }
 }

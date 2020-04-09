@@ -15,6 +15,7 @@ use Simps\Application;
 use Simps\Listener;
 use Simps\Route;
 use Swoole\Server;
+use Swoole\Table;
 
 class Tcp
 {
@@ -44,6 +45,16 @@ class Tcp
             [$class, $func] = $callbackItem;
             $this->_server->on($eventKey, [$class, $func]);
         }
+
+        foreach ($tcpConfig['tables'] as $key => $value) {
+            $this->_server->$key = new Table($value['size']);
+            foreach ($value['columns'] as $v) {
+                $this->_server->$key->column($v['name'],$v['type'],$v['size']);
+            }
+
+            $this->_server->$key->create();
+        }
+
         $this->_server->start();
     }
 

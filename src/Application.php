@@ -66,15 +66,18 @@ EOL;
             case 'tcp':
                 $className = \Simps\Server\Tcp::class;
                 break;
+            case 'mqtt':
+                $className = \Simps\Server\MqttServer::class;
+                break;
             default:
-                exit(self::echoError("use {$argv[0]} [http:start, ws:start, tcp:start]"));
+                exit(self::echoError("use {$argv[0]} [http:start, ws:start, mqtt:start]"));
         }
         switch ($command[1]) {
             case 'start':
                 new $className();
                 break;
             default:
-                self::echoError("use {$argv[0]} [http:start, ws:start, tcp:start]");
+                self::echoError("use {$argv[0]} [http:start, ws:start, tcp:start, mqtt:start]");
         }
     }
 }
