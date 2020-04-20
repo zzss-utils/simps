@@ -11,9 +11,10 @@ declare(strict_types=1);
 
 namespace Simps\Server;
 
+use App\Consumers\Deliver;
 use Simps\Application;
 use Simps\Listener;
-use Simps\Route;
+use SplPriorityQueue;
 use Swoole\Server;
 use Swoole\Table;
 
@@ -22,9 +23,6 @@ class Tcp
     protected $_server;
 
     protected $_config;
-
-    /** @var \Simps\Route $_route */
-    protected $_route;
 
     public function __construct()
     {
@@ -40,7 +38,6 @@ class Tcp
             $this->_server->on('start', [$this, 'onStart']);
         }
 
-        $this->_server->on('workerStart', [$this, 'onWorkerStart']);
         foreach ($tcpConfig['callbacks'] as $eventKey => $callbackItem) {
             [$class, $func] = $callbackItem;
             $this->_server->on($eventKey, [$class, $func]);
@@ -49,7 +46,7 @@ class Tcp
         foreach ($tcpConfig['tables'] as $key => $value) {
             $this->_server->$key = new Table($value['size']);
             foreach ($value['columns'] as $v) {
-                $this->_server->$key->column($v['name'],$v['type'],$v['size']);
+                $this->_server->$key->column($v['name'], $v['type'], $v['size']);
             }
 
             $this->_server->$key->create();
@@ -68,11 +65,5 @@ class Tcp
     {
         Application::echoSuccess("Swoole Tcp Server running：tcp://{$this->_config['ip']}:{$this->_config['port']}");
         Listener::getInstance()->listen('managerStart', $server);
-    }
-
-    public function onWorkerStart(\Swoole\Server $server, int $workerId)
-    {
-        $this->_route = Route::getInstance();
-        Listener::getInstance()->listen('workerStart', $server, $workerId);
     }
 }
